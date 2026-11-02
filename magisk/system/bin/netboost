@@ -26,6 +26,7 @@ Usage:
   netboost status                profile, bands, signal, TCP, hotspot
   netboost profile <name>        apply and persist a band profile
   netboost bench [seconds]       sustained download + loaded latency
+  netboost reelmode on|off|status  Data Saver + media whitelist
   netboost tune on|off           upload-side TCP tuning
   netboost wifi on|off|status    Wi-Fi client only (hotspot is separate)
   netboost hotspot               show the SoftAP band and state
@@ -37,6 +38,8 @@ Profiles:
   n78n28    NR-SA n28+n78, SA only (recommended)
   n78       NR-SA n78 only, SA only (lower latency)
   saonly    all NR-SA bands, SA only
+  srm       NR-SA n28 only, SA only (SRM KTR / indoor coverage)
+  srm-lte   LTE B3/B5/B28/B40 only (weak-signal fallback)
   lte       LTE B3/B5/B40 only (fallback testing)
 
 Band changes are temporary and never touch modem NV. "profile reset"
@@ -75,7 +78,15 @@ cmd_status() {
   sh "$TOOLS/bandctl.sh" show || true
 
   printf '\n%s\n' '--- signal ---'
-  signal_state
+  SIG=$(signal_state)
+  printf '%s\n' "$SIG"
+  RSRP=$(printf '%s\n' "$SIG" | sed -n 's/.*ssRsrp = \([-0-9]*\).*/\1/p' | head -n 1)
+  SINR=$(printf '%s\n' "$SIG" | sed -n 's/.*ssSinr = \([-0-9]*\).*/\1/p' | head -n 1)
+  if [ -n "$RSRP" ] && [ "$RSRP" != "2147483647" ] && [ "$RSRP" -lt -110 ]; then
+    printf '\nhint: weak n78 (%s dBm); try: netboost profile srm\n' "$RSRP"
+  elif [ -n "$SINR" ] && [ "$SINR" != "2147483647" ] && [ "$SINR" -lt 5 ]; then
+    printf '\nhint: low SINR (%s dB); try: netboost profile srm\n' "$SINR"
+  fi
 
   printf '\n%s\n' '--- radio ---'
   radio_state
@@ -121,6 +132,77 @@ cmd_tune() {
       sysctl -w net.ipv4.tcp_limit_output_bytes=506072
       sysctl -w net.ipv4.tcp_notsent_lowat=16384
       printf 'tcp tuning restored to stock\n'
+      ;;
+    *)
+      usage >&2
+      exit 2
+      ;;
+  esac
+}
+
+netpolicy_whitelist() {
+  cmd netpolicy list restrict-background-whitelist 2>/dev/null \
+    | sed 's/.*UIDs: //' | tr ' ' '\n' | grep -E '^[0-9]+$' || true
+}
+
+uid_for_package() {
+  cmd package list packages -U 2>/dev/null \
+    | awk -v p="$1" '$1 == "package:" p { sub("uid:", "", $2); print $2; exit }'
+}
+
+cmd_reelmode() {
+  case "${1:-}" in
+    on)
+      nb_require_root
+      nb_ensure_dir "$NB_HOME"
+      netpolicy_whitelist > "$NB_HOME/reelmode.prev-whitelist"
+      cmd netpolicy get restrict-background \
+        > "$NB_HOME/reelmode.prev-state" 2>/dev/null || true
+      cmd netpolicy set restrict-background true
+      : > "$NB_HOME/reelmode.added"
+      for pkg in \
+        com.instagram.android \
+        com.google.android.youtube \
+        com.whatsapp \
+        com.telegram.messenger \
+        com.android.chrome \
+        com.spotify.music; do
+        uid=$(uid_for_package "$pkg")
+        [ -n "$uid" ] || continue
+        if ! grep -qx "$uid" "$NB_HOME/reelmode.prev-whitelist"; then
+          cmd netpolicy add restrict-background-whitelist "$uid" \
+            >/dev/null 2>&1 || true
+          printf '%s\n' "$uid" >> "$NB_HOME/reelmode.added"
+        fi
+      done
+      printf 'reel mode on (background data restricted, media apps whitelisted)\n'
+      printf 'whitelisted UIDs: %s\n' "$(tr '\n' ' ' < "$NB_HOME/reelmode.added")"
+      ;;
+    off)
+      nb_require_root
+      if [ -f "$NB_HOME/reelmode.prev-state" ] \
+        && grep -q 'enabled' "$NB_HOME/reelmode.prev-state"; then
+        cmd netpolicy set restrict-background true
+      else
+        cmd netpolicy set restrict-background false
+      fi
+      if [ -f "$NB_HOME/reelmode.added" ]; then
+        while IFS= read -r uid; do
+          [ -n "$uid" ] || continue
+          if [ -f "$NB_HOME/reelmode.prev-whitelist" ] \
+            && grep -qx "$uid" "$NB_HOME/reelmode.prev-whitelist"; then
+            continue
+          fi
+          cmd netpolicy remove restrict-background-whitelist "$uid" \
+            >/dev/null 2>&1 || true
+        done < "$NB_HOME/reelmode.added"
+      fi
+      rm -f "$NB_HOME/reelmode.added"
+      printf 'reel mode off; previous background policy restored\n'
+      ;;
+    status)
+      cmd netpolicy get restrict-background 2>/dev/null || true
+      printf 'whitelisted UIDs: %s\n' "$(netpolicy_whitelist | tr '\n' ' ')"
       ;;
     *)
       usage >&2
@@ -176,6 +258,9 @@ main() {
       ;;
     tune)
       cmd_tune "${1:-}"
+      ;;
+    reelmode)
+      cmd_reelmode "${1:-}"
       ;;
     wifi)
       cmd_wifi "${1:-status}"

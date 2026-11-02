@@ -8,6 +8,10 @@ sysctl -w net.ipv4.tcp_limit_output_bytes=506072 2>/dev/null || true
 sysctl -w net.ipv4.tcp_notsent_lowat=16384 2>/dev/null || true
 settings put global mobile_data_always_on 0 2>/dev/null || true
 
+if [ -x "$MODDIR/system/bin/netboost" ]; then
+  sh "$MODDIR/system/bin/netboost" reelmode off >/dev/null 2>&1 || true
+fi
+
 if [ -x "$MODDIR/tools/bandctl.sh" ]; then
   sh "$MODDIR/tools/bandctl.sh" reset >/dev/null 2>&1 || true
 fi
