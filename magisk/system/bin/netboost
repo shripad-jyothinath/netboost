@@ -1,0 +1,193 @@
+#!/system/bin/sh
+# netboost - control reversible Jio 5G network tuning.
+set -eu
+
+SELF_DIR=$(cd "$(dirname "$0")" && pwd)
+MODDIR=
+for candidate in /data/adb/modules/netboost /data/adb/modules_update/netboost; do
+  if [ -d "$candidate/tools" ]; then
+    MODDIR=$candidate
+    break
+  fi
+done
+if [ -z "$MODDIR" ]; then
+  # Repository layout: magisk/system/bin/netboost -> magisk/
+  MODDIR=$(cd "$SELF_DIR/../.." && pwd)
+fi
+# shellcheck source=../tools/common.sh
+. "$MODDIR/tools/common.sh"
+TOOLS=$MODDIR/tools
+
+usage() {
+  cat <<'EOF'
+netboost - reversible Jio 5G tuning for rooted Qualcomm devices
+
+Usage:
+  netboost status                profile, bands, signal, TCP, hotspot
+  netboost profile <name>        apply and persist a band profile
+  netboost bench [seconds]       sustained download + loaded latency
+  netboost tune on|off           upload-side TCP tuning
+  netboost wifi on|off|status    Wi-Fi client only (hotspot is separate)
+  netboost hotspot               show the SoftAP band and state
+  netboost version               print the version
+  netboost help                  this text
+
+Profiles:
+  reset     hardware defaults (all bands, SA/NSA)
+  n78n28    NR-SA n28+n78, SA only (recommended)
+  n78       NR-SA n78 only, SA only (lower latency)
+  saonly    all NR-SA bands, SA only
+  lte       LTE B3/B5/B40 only (fallback testing)
+
+Band changes are temporary and never touch modem NV. "profile reset"
+or a reboot restores the hardware defaults.
+EOF
+}
+
+signal_state() {
+  dumpsys telephony.registry 2>/dev/null \
+    | grep -m1 'mSignalStrength=' \
+    | tr ',' '\n' \
+    | grep -E 'ssRsrp|ssRsrq|ssSinr' || true
+}
+
+radio_state() {
+  dumpsys telephony.registry 2>/dev/null \
+    | grep -m1 'mServiceState=' \
+    | tr ',' '\n' \
+    | grep -E 'mOperatorAlphaLong|getRilDataRadioTechnology|mDataRegState' \
+    | head -n 3 || true
+}
+
+hotspot_state() {
+  if command -v dumpsys >/dev/null 2>&1; then
+    dumpsys wifi 2>/dev/null \
+      | grep -m1 'mCurrentSoftApInfoMap' \
+      || printf 'hotspot state unavailable\n'
+  fi
+}
+
+cmd_status() {
+  printf 'netboost %s\n' "$NB_VERSION"
+  printf 'profile : %s\n' "$(nb_read_profile)"
+
+  printf '\n%s\n' '--- bands ---'
+  sh "$TOOLS/bandctl.sh" show || true
+
+  printf '\n%s\n' '--- signal ---'
+  signal_state
+
+  printf '\n%s\n' '--- radio ---'
+  radio_state
+
+  printf '\n%s\n' '--- tcp ---'
+  sysctl net.ipv4.tcp_limit_output_bytes net.ipv4.tcp_notsent_lowat \
+    net.ipv4.tcp_rmem net.ipv4.tcp_wmem 2>/dev/null || true
+
+  printf '\n%s\n' '--- settings ---'
+  printf 'mobile_data_always_on=%s\n' \
+    "$(settings get global mobile_data_always_on 2>/dev/null || printf '?')"
+
+  printf '\n%s\n' '--- hotspot ---'
+  hotspot_state
+}
+
+cmd_profile() {
+  if [ "$#" -ne 1 ]; then
+    usage >&2
+    exit 2
+  fi
+
+  sh "$TOOLS/bandctl.sh" "$1"
+
+  if [ "$1" = "reset" ]; then
+    nb_write_profile none
+  else
+    nb_write_profile "$1"
+  fi
+  printf 'saved profile: %s\n' "$(nb_read_profile)"
+}
+
+cmd_tune() {
+  case "${1:-}" in
+    on)
+      nb_require_root
+      sysctl -w net.ipv4.tcp_limit_output_bytes=2097152
+      sysctl -w net.ipv4.tcp_notsent_lowat=262144
+      printf 'tcp tuning enabled\n'
+      ;;
+    off)
+      nb_require_root
+      sysctl -w net.ipv4.tcp_limit_output_bytes=506072
+      sysctl -w net.ipv4.tcp_notsent_lowat=16384
+      printf 'tcp tuning restored to stock\n'
+      ;;
+    *)
+      usage >&2
+      exit 2
+      ;;
+  esac
+}
+
+cmd_wifi() {
+  case "${1:-status}" in
+    on)
+      svc wifi enable
+      printf 'wifi client enabled\n'
+      ;;
+    off)
+      svc wifi disable
+      printf 'wifi client disabled (hotspot is unaffected)\n'
+      ;;
+    status)
+      cmd wifi status 2>/dev/null | head -n 6 || true
+      ;;
+    *)
+      usage >&2
+      exit 2
+      ;;
+  esac
+}
+
+main() {
+  if [ "$#" -lt 1 ]; then
+    usage
+    exit 0
+  fi
+
+  COMMAND=$1
+  shift
+
+  case "$COMMAND" in
+    help|-h|--help)
+      usage
+      ;;
+    version|-V|--version)
+      printf 'netboost %s\n' "$NB_VERSION"
+      ;;
+    status)
+      cmd_status
+      ;;
+    profile)
+      cmd_profile "$@"
+      ;;
+    bench)
+      sh "$TOOLS/bench.sh" "${1:-5}"
+      ;;
+    tune)
+      cmd_tune "${1:-}"
+      ;;
+    wifi)
+      cmd_wifi "${1:-status}"
+      ;;
+    hotspot)
+      hotspot_state
+      ;;
+    *)
+      usage >&2
+      exit 2
+      ;;
+  esac
+}
+
+main "$@"
