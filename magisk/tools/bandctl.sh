@@ -23,6 +23,8 @@ Profiles:
   n78n28    NR-SA n28+n78, SA only (recommended)
   n78       NR-SA n78 only, SA only (lower latency)
   saonly    all NR-SA bands, SA only
+  srm       NR-SA n28 only, SA only (SRM KTR / indoor coverage)
+  srm-lte   LTE B3/B5/B28/B40 only (weak-signal fallback)
   lte       LTE B3/B5/B40 only (fallback testing)
   show      print the current selection
 
@@ -43,6 +45,12 @@ profile_commands() {
       ;;
     saonly)
       printf 'reset\nrat gsm,wcdma,lte,nr\nmode sa\n'
+      ;;
+    srm)
+      printf 'reset\nrat gsm,wcdma,lte,nr\nsa 28\nmode sa\n'
+      ;;
+    srm-lte)
+      printf 'reset\nrat gsm,wcdma,lte,nr\nrat lte\nlte 3,5,28,40\n'
       ;;
     lte)
       printf 'reset\nrat gsm,wcdma,lte,nr\nrat lte\nlte 3,5,40\n'
