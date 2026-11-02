@@ -5,6 +5,7 @@ set -eu
 
 REPO_ROOT=${REPO_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}
 VERSION=$(tr -d ' \r\n' < "$REPO_ROOT/VERSION" 2>/dev/null || true)
+export VERSION
 
 log() {
   printf '%s\n' "$*"

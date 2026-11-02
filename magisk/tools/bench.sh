@@ -145,8 +145,9 @@ main() {
   fi
 
   nb_is_uint "$DURATION" || nb_die "duration must be an integer"
-  [ "$DURATION" -ge 1 ] && [ "$DURATION" -le 60 ] \
-    || nb_die "duration must be between 1 and 60 seconds"
+  if [ "$DURATION" -lt 1 ] || [ "$DURATION" -gt 60 ]; then
+    nb_die "duration must be between 1 and 60 seconds"
+  fi
 
   nb_require_root
   nb_require_cmd curl

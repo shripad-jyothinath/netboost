@@ -1,5 +1,6 @@
 #!/system/bin/sh
 # Magisk installer hook.
+# shellcheck disable=SC2154
 
 set_perm_recursive "$MODPATH" 0 0 0755 0644
 set_perm "$MODPATH/service.sh" 0 0 0755

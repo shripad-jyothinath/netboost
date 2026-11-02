@@ -5,6 +5,7 @@
 NB_VERSION=${NB_VERSION:-1.0.0}
 NB_HOME=${NETBOOST_HOME:-/data/adb/netboost}
 NB_WORK=${NETBOOST_WORK:-/data/local/tmp/netdiag}
+export NB_VERSION NB_HOME NB_WORK
 
 nb_log() {
   printf '%s\n' "$*"

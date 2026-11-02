@@ -14,7 +14,7 @@ if [ -z "$MODDIR" ]; then
   # Repository layout: magisk/system/bin/netboost -> magisk/
   MODDIR=$(cd "$SELF_DIR/../.." && pwd)
 fi
-# shellcheck source=../tools/common.sh
+# shellcheck source=../../tools/common.sh
 . "$MODDIR/tools/common.sh"
 TOOLS=$MODDIR/tools
 
