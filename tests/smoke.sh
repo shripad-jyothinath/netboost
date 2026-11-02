@@ -8,12 +8,14 @@ REPO_ROOT=$(cd "$(dirname "$0")/.." && pwd)
 
 log "bandctl help"
 sh "$REPO_ROOT/magisk/tools/bandctl.sh" --help | grep -q 'Profiles:'
+sh "$REPO_ROOT/magisk/tools/bandctl.sh" --help | grep -q 'srm-lte'
 
 log "bench help"
 sh "$REPO_ROOT/magisk/tools/bench.sh" --help | grep -q 'Usage:'
 
 log "cli help"
 sh "$REPO_ROOT/magisk/system/bin/netboost" help | grep -q 'netboost'
+sh "$REPO_ROOT/magisk/system/bin/netboost" help | grep -q 'reelmode'
 
 log "cli version"
 [ "$(sh "$REPO_ROOT/magisk/system/bin/netboost" version)" = "netboost $VERSION" ]
