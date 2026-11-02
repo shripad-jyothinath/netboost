@@ -28,9 +28,10 @@ jobs:
 
       - name: Verify module zip
         run: |
+          VERSION=$(cat VERSION)
           test -n "$(ls build/netboost-*.zip)"
           unzip -l build/netboost-*.zip
           unzip -p build/netboost-*.zip module.prop | grep -q '^id=netboost$'
-          unzip -p build/netboost-*.zip module.prop | grep -q "^version=1.0.0$"
+          unzip -p build/netboost-*.zip module.prop | grep -q "^version=$VERSION$"
           unzip -p build/netboost-*.zip tools/bandctl.sh | head -n 1 | grep -q '^#!/system/bin/sh$'
           unzip -p build/netboost-*.zip system/bin/netboost | head -n 1 | grep -q '^#!/system/bin/sh$'
