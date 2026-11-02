@@ -27,6 +27,7 @@ profile targets Jio's n28 + n78 deployment.
 - [Install](#install)
 - [Usage](#usage)
 - [Profiles](#profiles)
+- [Weak indoor signal (SRM KTR)](#weak-indoor-signal-srm-ktr)
 - [Safety](#safety)
 - [Troubleshooting](#troubleshooting)
 - [Development](#development)
@@ -56,6 +57,7 @@ instead of guessing.
 |---|---|
 | Reversible band profiles | QMI `Set System Selection Preference` over QRTR; not NV |
 | NR SA control | SA-only mode, separate NR-SA and NR-NSA masks |
+| Reel mode | Data Saver + media whitelist; stops game/Play Store background updates |
 | Latency-aware benchmark | Single/4-stream throughput plus idle and loaded ICMP latency |
 | Safe boot service | Applies the saved profile with retries, logs every attempt |
 | Clean uninstall | Restores stock sysctls, settings and hardware band masks |
@@ -119,7 +121,7 @@ registers. Details and the TLV layout are in
 
 ```sh
 make build
-adb push build/netboost-1.0.0.zip /data/local/tmp/netboost.zip
+adb push build/netboost-1.1.0.zip /data/local/tmp/netboost.zip
 adb shell su -c "magisk --install-module /data/local/tmp/netboost.zip"
 adb reboot
 ```
@@ -157,6 +159,8 @@ su -c netboost status
 su -c netboost bench 5
 su -c netboost profile n78n28
 su -c netboost profile reset
+su -c netboost reelmode on
+su -c netboost reelmode off
 su -c netboost tune on
 su -c netboost wifi off
 su -c netboost hotspot
@@ -175,6 +179,11 @@ NETBOOST_IFACE=rmnet_data2 \
 su -c netboost bench 8
 ```
 
+`netboost reelmode on` enables Android Data Saver and whitelists the media
+apps (Instagram, YouTube, WhatsApp, Telegram, Chrome, Spotify) so game and
+Play Store updates stop competing for the radio. Foreground video is
+unaffected. `netboost reelmode off` restores the previous background policy.
+
 ## Profiles
 
 | Profile | RAT | NR-SA mask | NR mode | Use |
@@ -183,11 +192,42 @@ su -c netboost bench 8
 | `n78n28` | GSM/WCDMA/LTE/NR | n28 + n78 | SA | recommended |
 | `n78` | GSM/WCDMA/LTE/NR | n78 | SA | lower latency |
 | `saonly` | GSM/WCDMA/LTE/NR | hardware default | SA | experimental |
+| `srm` | GSM/WCDMA/LTE/NR | n28 | SA | SRM KTR / indoor coverage |
+| `srm-lte` | LTE | unchanged | unchanged | weak-signal LTE fallback |
 | `lte` | LTE | unchanged | unchanged | fallback testing |
 
 The profile is persisted in `/data/adb/netboost/band_profile` and re-applied
 by the boot service. `profile reset` writes `none`, so the service leaves the
 modem alone on the next boot.
+
+## Weak indoor signal (SRM KTR)
+
+n78 (3.5 GHz) carries Jio's capacity but dies indoors; n28 (700 MHz) and LTE
+B5 (850 MHz) are the coverage layers. A 2019 SRM Kattankulathur campus study
+across University Block, Java Food Court, Tech Park, Valliammai Gate and the
+hospital found **Airtel the most consistent carrier and Jio the weakest**
+(Jio had no coverage at Valliammai Gate). If classmates get data in class,
+they are likely on Airtel, or their phones have fallen back to LTE low-band.
+
+Try these in order and keep the one that works:
+
+```sh
+su -c netboost profile srm       # NR-SA n28 only (700 MHz)
+su -c netboost profile srm-lte   # LTE B3/B5/B28/B40 only
+su -c netboost profile reset     # back to normal when you leave campus
+```
+
+`netboost status` prints a hint when RSRP is below −110 dBm or SINR below
+5 dB. n28 is slower (often 1–5 Mbps in weak spots) but penetrates concrete;
+n78 may be faster only near a window. If the phone shows 5G but no data,
+`srm-lte` is the closest match to what the "everyone else has data" phones
+are doing.
+
+Root cannot change your carrier. The phone has **SIM 2 empty** and supports
+eSIM; a second Airtel SIM/eSIM is the only way to truly match an Airtel
+classmate. Campus Wi-Fi or Wi-Fi calling is the other alternative.
+
+See the [SRM 4G study](https://www.ijitee.org/wp-content/uploads/papers/v8i8s/H10100688S19.pdf).
 
 ## Safety
 

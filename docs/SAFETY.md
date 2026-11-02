@@ -18,6 +18,7 @@
 | `tcp_limit_output_bytes` | Runtime sysctl | `netboost tune off` or reboot |
 | `tcp_notsent_lowat` | Runtime sysctl | `netboost tune off` or reboot |
 | `mobile_data_always_on` | Android global setting | Module uninstall sets it back to `0` |
+| Data Saver + whitelist | Android netpolicy | `netboost reelmode off` |
 
 The module does not touch `tcp_rmem` or `tcp_wmem`; Android sets those per
 mobile network and would overwrite a boot-time value anyway.
@@ -43,6 +44,7 @@ mobile network and would overwrite a boot-time value anyway.
 
 ```sh
 su -c netboost profile reset
+su -c netboost reelmode off
 su -c netboost tune off
 ```
 

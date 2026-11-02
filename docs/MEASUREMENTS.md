@@ -74,5 +74,8 @@ latency, which is the more relevant improvement for interactive use.
   ceiling.
 - No thermal soak or multi-hour stability run was performed.
 - No band-locked comparison at a second location was possible.
+- `srm`/`srm-lte` were added for the SRM Kattankulathur campus but were not
+  measured there. The 2019 SRM 4G study is the only public campus data point;
+  current 5G coverage may differ.
 - RS-SINR and RSRP come from `dumpsys telephony.registry`; the modem does not
   report NR bandwidth or per-carrier CA details on this build.

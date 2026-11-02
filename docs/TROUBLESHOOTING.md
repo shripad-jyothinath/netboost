@@ -75,6 +75,43 @@ If the CLI is unavailable, disable the module in Magisk and reboot.
 4. Run `netboost bench 5` and compare idle versus loaded latency. A large gap
    is bufferbloat/queueing in the radio network, not a device fault.
 
+## SRM KTR / weak indoor signal
+
+n78 is capacity, n28 (700 MHz) and LTE B5 (850 MHz) are coverage. Inside a
+concrete classroom the phone can show 5G and still have no usable data
+because it is camped on a distant n78 cell. Try, in order:
+
+```sh
+su -c netboost profile srm       # NR-SA n28 only
+su -c netboost profile srm-lte   # LTE B3/B5/B28/B40 only
+su -c netboost profile reset     # restore when you leave
+```
+
+`netboost status` prints a hint when RSRP is below −110 dBm or SINR below
+5 dB. n28 is slower (often 1–5 Mbps in weak spots) but penetrates concrete.
+If `srm` has no data, `srm-lte` is the closest match to what classmates'
+phones are doing when they fall back to LTE.
+
+If classmates get data and you do not, check their SIM. A 2019 SRM
+Kattankulathur study found Airtel the most consistent carrier and Jio the
+weakest. Root cannot change your carrier; a second Airtel SIM/eSIM (SIM 2 is
+empty on this phone) or campus Wi-Fi is the only true match.
+
+## Reel mode / Data Saver
+
+`netboost reelmode on` enables Android Data Saver and whitelists the media
+apps so background game/Play Store updates stop competing for the radio.
+Verify:
+
+```sh
+su -c netboost reelmode status
+su -c cmd netpolicy get restrict-background
+```
+
+`reelmode off` restores the previous background policy. Data Saver persists
+across reboots; the module does not change it on boot. Tethered clients are
+not affected.
+
 ## Hotspot turned off
 
 `svc wifi disable` only disables the Wi-Fi **client**. The SoftAP is managed

@@ -75,11 +75,24 @@ entry point is executed through `su -c` or by the Magisk boot service.
 | `n78n28` | GSM/WCDMA/LTE/NR | n28 + n78 | SA | recommended |
 | `n78` | GSM/WCDMA/LTE/NR | n78 | SA | lower latency |
 | `saonly` | GSM/WCDMA/LTE/NR | hardware default | SA | experimental |
+| `srm` | GSM/WCDMA/LTE/NR | n28 | SA | weak indoor signal (SRM KTR) |
+| `srm-lte` | LTE | unchanged | unchanged | weak-signal LTE fallback |
 | `lte` | LTE | unchanged | unchanged | fallback testing |
 
 Jio's 5G deployments in the tested region use n78 (3.5 GHz, capacity) and
 n28 (700 MHz, coverage). `n78n28` keeps both carriers eligible for NR CA
-while preventing the n78 → n28 → LTE reselection cycle.
+while preventing the n78 → n28 → LTE reselection cycle. `srm` intentionally
+drops n78: indoors, 700 MHz penetrates concrete where 3.5 GHz does not.
+
+## Reel mode
+
+`netboost reelmode on` flips Android's global Data Saver policy
+(`cmd netpolicy set restrict-background true`) and adds the media UIDs to the
+restrict-background whitelist. Foreground playback is unaffected; background
+game/Play Store downloads stop competing for the radio scheduler. The previous
+policy and whitelist are saved under `/data/adb/netboost/` and restored by
+`reelmode off`. This is an Android setting, not a modem or kernel change, and
+it does not affect tethered clients.
 
 ## Boot flow
 
