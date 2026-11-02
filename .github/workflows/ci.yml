@@ -1,0 +1,36 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y shellcheck zip
+
+      - name: Lint and smoke tests
+        run: make test
+
+      - name: Build module
+        run: make build
+
+      - name: Verify module zip
+        run: |
+          test -n "$(ls build/netboost-*.zip)"
+          unzip -l build/netboost-*.zip
+          unzip -p build/netboost-*.zip module.prop | grep -q '^id=netboost$'
+          unzip -p build/netboost-*.zip module.prop | grep -q "^version=1.0.0$"
+          unzip -p build/netboost-*.zip tools/bandctl.sh | head -n 1 | grep -q '^#!/system/bin/sh$'
+          unzip -p build/netboost-*.zip system/bin/netboost | head -n 1 | grep -q '^#!/system/bin/sh$'
