@@ -1,6 +1,6 @@
 id=netboost
 name=netboost
-version=1.1.0
-versionCode=10100
+version=1.2.0
+versionCode=10200
 author=shripad-jyothinath
-description=Reversible Jio 5G tuning: NR-SA profiles (n28+n78, n78, SRM indoor), reel mode, upload-side TCP tuning, hotspot-safe defaults.
+description=Reversible Jio 5G and Wi-Fi tuning: NR-SA profiles incl. SRM indoor, reel mode, Wi-Fi scan/power-save tuning, hotspot-safe defaults.

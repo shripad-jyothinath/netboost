@@ -2,7 +2,7 @@
 # Shared helpers for netboost device-side scripts.
 # Source this file; it intentionally does not enable set -e.
 
-NB_VERSION=${NB_VERSION:-1.1.0}
+NB_VERSION=${NB_VERSION:-1.2.0}
 NB_HOME=${NETBOOST_HOME:-/data/adb/netboost}
 NB_WORK=${NETBOOST_WORK:-/data/local/tmp/netdiag}
 export NB_VERSION NB_HOME NB_WORK
