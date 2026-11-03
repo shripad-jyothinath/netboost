@@ -28,6 +28,7 @@ profile targets Jio's n28 + n78 deployment.
 - [Usage](#usage)
 - [Profiles](#profiles)
 - [Weak indoor signal (SRM KTR)](#weak-indoor-signal-srm-ktr)
+- [Wi-Fi tuning](#wi-fi-tuning)
 - [Safety](#safety)
 - [Troubleshooting](#troubleshooting)
 - [Development](#development)
@@ -58,6 +59,7 @@ instead of guessing.
 | Reversible band profiles | QMI `Set System Selection Preference` over QRTR; not NV |
 | NR SA control | SA-only mode, separate NR-SA and NR-NSA masks |
 | Reel mode | Data Saver + media whitelist; stops game/Play Store background updates |
+| Wi-Fi tuning | Disables scan-always and vendor power-save; reversible |
 | Latency-aware benchmark | Single/4-stream throughput plus idle and loaded ICMP latency |
 | Safe boot service | Applies the saved profile with retries, logs every attempt |
 | Clean uninstall | Restores stock sysctls, settings and hardware band masks |
@@ -121,7 +123,7 @@ registers. Details and the TLV layout are in
 
 ```sh
 make build
-adb push build/netboost-1.1.0.zip /data/local/tmp/netboost.zip
+adb push build/netboost-1.2.0.zip /data/local/tmp/netboost.zip
 adb shell su -c "magisk --install-module /data/local/tmp/netboost.zip"
 adb reboot
 ```
@@ -161,6 +163,7 @@ su -c netboost profile n78n28
 su -c netboost profile reset
 su -c netboost reelmode on
 su -c netboost reelmode off
+su -c netboost wifi-tune on
 su -c netboost tune on
 su -c netboost wifi off
 su -c netboost hotspot
@@ -228,6 +231,18 @@ eSIM; a second Airtel SIM/eSIM is the only way to truly match an Airtel
 classmate. Campus Wi-Fi or Wi-Fi calling is the other alternative.
 
 See the [SRM 4G study](https://www.ijitee.org/wp-content/uploads/papers/v8i8s/H10100688S19.pdf).
+
+## Wi-Fi tuning
+
+`netboost wifi-tune on` disables Android's always-on Wi-Fi scanning and the
+vendor Wi-Fi power-save setting. On SRMIST (5 GHz Wi-Fi 6, 80 MHz) this raised
+the link from 432/272 to 480/272 Mbps and cut `i.instagram.com` TTFB from
+879 ms to 371 ms. It does not change the AP or band.
+
+The campus network itself caps real throughput at roughly 50–80 Mbps, and
+Google peering measured 4.5 Mbps versus 40–55 Mbps for Cloudflare, so no device
+setting can exceed the campus cap. `wifi-tune off` restores the stock values.
+See [docs/WIFI.md](docs/WIFI.md).
 
 ## Safety
 

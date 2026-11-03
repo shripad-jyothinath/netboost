@@ -5,6 +5,16 @@ All notable changes to this project are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-11-03
+
+### Added
+
+- `netboost wifi-tune on|off|status`: disables scan-always and the vendor
+  Wi-Fi power-save setting, with a stock restore path.
+- `docs/WIFI.md`: SRMIST 5 GHz link measurements, campus throughput cap,
+  Google-vs-Cloudflare peering, blocked DoT/ICMP, and the measured effect of
+  the tuning.
+
 ## [1.1.0] - 2026-11-02
 
 ### Added
@@ -44,5 +54,6 @@ and the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Measured on a Motorola Edge 70 Fusion on Jio 5G in Chennai; absolute
   throughput is cell-dependent (see `docs/MEASUREMENTS.md`).
 
+[1.2.0]: https://github.com/shripad-jyothinath/netboost/releases/tag/v1.2.0
 [1.1.0]: https://github.com/shripad-jyothinath/netboost/releases/tag/v1.1.0
 [1.0.0]: https://github.com/shripad-jyothinath/netboost/releases/tag/v1.0.0
