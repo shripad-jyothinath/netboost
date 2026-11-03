@@ -16,6 +16,7 @@ sh "$REPO_ROOT/magisk/tools/bench.sh" --help | grep -q 'Usage:'
 log "cli help"
 sh "$REPO_ROOT/magisk/system/bin/netboost" help | grep -q 'netboost'
 sh "$REPO_ROOT/magisk/system/bin/netboost" help | grep -q 'reelmode'
+sh "$REPO_ROOT/magisk/system/bin/netboost" help | grep -q 'wifi-tune'
 
 log "cli version"
 [ "$(sh "$REPO_ROOT/magisk/system/bin/netboost" version)" = "netboost $VERSION" ]

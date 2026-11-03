@@ -27,6 +27,7 @@ Usage:
   netboost profile <name>        apply and persist a band profile
   netboost bench [seconds]       sustained download + loaded latency
   netboost reelmode on|off|status  Data Saver + media whitelist
+  netboost wifi-tune on|off|status  disable Wi-Fi scan-always + power-save
   netboost tune on|off           upload-side TCP tuning
   netboost wifi on|off|status    Wi-Fi client only (hotspot is separate)
   netboost hotspot               show the SoftAP band and state
@@ -231,6 +232,36 @@ cmd_wifi() {
   esac
 }
 
+cmd_wifi_tune() {
+  case "${1:-}" in
+    on)
+      nb_require_root
+      settings put global wifi_scan_always_enabled 0
+      cmd wifi set-scan-always-available disabled >/dev/null 2>&1 || true
+      settings put global wifi_power_save 0
+      printf 'wifi tuning on (scan-always off, power-save off)\n'
+      ;;
+    off)
+      nb_require_root
+      settings put global wifi_scan_always_enabled 1
+      cmd wifi set-scan-always-available enabled >/dev/null 2>&1 || true
+      settings put global wifi_power_save 120
+      printf 'wifi tuning off (stock values restored)\n'
+      ;;
+    status)
+      printf 'wifi_scan_always_enabled=%s\n' \
+        "$(settings get global wifi_scan_always_enabled 2>/dev/null || printf '?')"
+      printf 'wifi_power_save=%s\n' \
+        "$(settings get global wifi_power_save 2>/dev/null || printf '?')"
+      cmd wifi status 2>/dev/null | grep -m1 'WifiInfo' || true
+      ;;
+    *)
+      usage >&2
+      exit 2
+      ;;
+  esac
+}
+
 main() {
   if [ "$#" -lt 1 ]; then
     usage
@@ -264,6 +295,9 @@ main() {
       ;;
     wifi)
       cmd_wifi "${1:-status}"
+      ;;
+    wifi-tune)
+      cmd_wifi_tune "${1:-}"
       ;;
     hotspot)
       hotspot_state
