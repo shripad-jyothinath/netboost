@@ -123,7 +123,7 @@ registers. Details and the TLV layout are in
 
 ```sh
 make build
-adb push build/netboost-1.2.0.zip /data/local/tmp/netboost.zip
+adb push build/netboost-1.2.1.zip /data/local/tmp/netboost.zip
 adb shell su -c "magisk --install-module /data/local/tmp/netboost.zip"
 adb reboot
 ```

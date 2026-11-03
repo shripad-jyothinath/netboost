@@ -5,7 +5,7 @@ set -eu
 SELF_DIR=$(cd "$(dirname "$0")" && pwd)
 MODDIR=
 for candidate in /data/adb/modules/netboost /data/adb/modules_update/netboost; do
-  if [ -d "$candidate/tools" ]; then
+  if [ -f "$candidate/tools/common.sh" ]; then
     MODDIR=$candidate
     break
   fi

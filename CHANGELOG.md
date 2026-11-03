@@ -5,6 +5,14 @@ All notable changes to this project are documented in this file.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.1] - 2026-11-03
+
+### Fixed
+
+- CLI module detection now requires `tools/common.sh`, so running the staged
+  1.2.x CLI does not try to source an older module's incomplete tools
+  directory.
+
 ## [1.2.0] - 2026-11-03
 
 ### Added
@@ -54,6 +62,7 @@ and the project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Measured on a Motorola Edge 70 Fusion on Jio 5G in Chennai; absolute
   throughput is cell-dependent (see `docs/MEASUREMENTS.md`).
 
+[1.2.1]: https://github.com/shripad-jyothinath/netboost/releases/tag/v1.2.1
 [1.2.0]: https://github.com/shripad-jyothinath/netboost/releases/tag/v1.2.0
 [1.1.0]: https://github.com/shripad-jyothinath/netboost/releases/tag/v1.1.0
 [1.0.0]: https://github.com/shripad-jyothinath/netboost/releases/tag/v1.0.0
